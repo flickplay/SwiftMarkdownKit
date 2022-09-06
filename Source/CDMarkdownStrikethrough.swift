@@ -1,10 +1,10 @@
 //
-//  CDMarkdownQuote.swift
+//  CDMarkdownStrikethrough.swift
 //  CDMarkdownKit
 //
-//  Created by Christopher de Haan on 11/7/16.
+//  Created by Théo Arrouye on 9/1/22.
 //
-//  Copyright © 2016-2022 Christopher de Haan <contact@christopherdehaan.me>
+//  Copyright © 2022 Théo Arrouye
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -26,55 +26,51 @@
 //
 
 #if os(iOS) || os(tvOS) || os(watchOS)
-    import UIKit
+import UIKit
 #elseif os(macOS)
-    import Cocoa
+import Cocoa
 #endif
 
-open class CDMarkdownQuote: CDMarkdownLevelElement {
-
-    fileprivate static let regex = "^(\\>{1,%@})\\s*(.+)$"
-
-    open var maxLevel: Int
+open class CDMarkdownStrikethrough: CDMarkdownCommonElement {
+    
+    fileprivate static let regex = "()(~~)(.*?)(\\2)"
+    
     open var font: CDFont?
     open var color: CDColor?
     open var backgroundColor: CDColor?
     open var paragraphStyle: NSParagraphStyle?
     open var underlineStyle: NSUnderlineStyle?
     open var underlineColor: CDColor?
-    open var separator: String
-    open var indicator: String
-
+    open var strikethroughStyle: NSUnderlineStyle
+    open var strikethroughColor: CDColor?
+    
     open var regex: String {
-        let level: String = maxLevel > 0 ? "\(maxLevel)" : ""
-        return String(format: CDMarkdownQuote.regex,
-                      level)
+        return CDMarkdownStrikethrough.regex
     }
-
+    
     public init(font: CDFont? = nil,
-                maxLevel: Int = 0,
-                indicator: String = ">",
-                separator: String = "  ",
+                customLineStyle: NSUnderlineStyle? = nil,
+                strikethroughColor: CDColor? = nil,
                 color: CDColor? = nil,
                 backgroundColor: CDColor? = nil,
                 paragraphStyle: NSParagraphStyle? = nil) {
-        self.maxLevel = maxLevel
-        self.indicator = indicator
-        self.separator = separator
         self.font = font
         self.color = color
         self.backgroundColor = backgroundColor
         self.paragraphStyle = paragraphStyle
+        self.strikethroughStyle = customLineStyle ?? .single
+        self.strikethroughColor = strikethroughColor
     }
-
-    open func formatText(_ attributedString: NSMutableAttributedString,
-                         range: NSRange,
-                         level: Int) {
-        var string = (0..<level).reduce("") { (string: String, _: Int) -> String in
-            return "\(string)\(separator)"
+    
+    public func addAttributes(_ attributedString: NSMutableAttributedString, range: NSRange) {
+        var adjustedAttributes = attributes
+        
+        adjustedAttributes.addStrikethroughStyle(strikethroughStyle)
+        if let stColor = strikethroughColor {
+            adjustedAttributes.addStrikethroughColor(stColor)
         }
-        string = "\(string)\(indicator) "
-        attributedString.replaceCharacters(in: range,
-                                           with: string)
+        
+        attributedString.addAttributes(adjustedAttributes, range: range)
     }
+    
 }
