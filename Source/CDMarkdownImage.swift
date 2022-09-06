@@ -43,7 +43,13 @@ open class CDMarkdownImage: CDMarkdownLinkElement {
     open var paragraphStyle: NSParagraphStyle?
     open var underlineStyle: NSUnderlineStyle?
     open var underlineColor: CDColor?
-    open var size: CGSize?
+    open var size: CGSize? {
+        didSet {
+            updateSizeForImageAttachments()
+        }
+    }
+  
+  private var imageAttachments: [RemoteImageTextAttachment] = []
 
     open var regex: String {
         return CDMarkdownImage.regex
@@ -99,7 +105,9 @@ open class CDMarkdownImage: CDMarkdownLinkElement {
       
         let textAttachment: NSTextAttachment
         if let url = URL(string: linkURLString) {
-            textAttachment = RemoteImageTextAttachment(imageURL: url, displaySize: self.size)
+            let imageAttachment = RemoteImageTextAttachment(imageURL: url, displaySize: self.size)
+            imageAttachments.append(imageAttachment)
+            textAttachment = imageAttachment
         } else {
             textAttachment = NSTextAttachment()
         }
@@ -127,19 +135,11 @@ open class CDMarkdownImage: CDMarkdownLinkElement {
         attributedString.addAttributes(attributes,
                                        range: range)
     }
-
-    private func adjustTextAttachmentSize(_ textAttachment: NSTextAttachment,
-                                          forImage image: CDImage) {
-        guard let size = size else { return }
-
-        // add padding to image
-        let preferredWidth = size.width - 10
-        let widthScalingFactor = image.size.width / preferredWidth
-
-        textAttachment.bounds = CGRect(x: 0,
-                                       y: 0,
-                                       width: image.size.width / widthScalingFactor,
-                                       height: image.size.height / widthScalingFactor)
+  
+    private func updateSizeForImageAttachments() {
+        self.imageAttachments.forEach {
+            $0.displaySize = self.size
+        }
     }
 }
 
