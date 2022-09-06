@@ -61,8 +61,10 @@ open class CDMarkdownParser {
     fileprivate var unescaping = CDMarkdownUnescaping()
 
     // MARK: - Configuration
-    // Enables or disables detection of URLs even without Markdown format
+    /// Enables or disables detection of URLs even without Markdown format
     open var automaticLinkDetectionEnabled: Bool = true
+    /// Enables or disables automatic squashing of multiple newlines
+    open var shouldSquashNewlines: Bool = true
     public let font: CDFont
     public let fontColor: CDColor
     public let backgroundColor: CDColor
@@ -80,6 +82,7 @@ open class CDMarkdownParser {
                 imageSize: CGSize? = nil,
                 automaticLinkDetectionEnabled: Bool = true,
                 linkUnderlineStyle: NSUnderlineStyle? = .single,
+                shouldSquashNewlines: Bool = false,
                 customElements: [CDMarkdownElement] = []) {
         self.font = font
         self.fontColor = fontColor
@@ -149,6 +152,7 @@ open class CDMarkdownParser {
 #endif
 
         self.automaticLinkDetectionEnabled = automaticLinkDetectionEnabled
+        self.shouldSquashNewlines = shouldSquashNewlines
         self.escapingElements = [codeEscaping, escaping]
 #if os(iOS) || os(macOS) || os(tvOS)
         self.defaultElements = [header, list, quote, link, automaticLink, image, bold, italic, strikethrough]
@@ -181,11 +185,13 @@ open class CDMarkdownParser {
     open func parse(_ markdown: NSAttributedString) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(attributedString: markdown)
         let mutableString = attributedString.mutableString
-        mutableString.replaceOccurrences(of: "\n\n+",
-                                         with: "\n",
-                                         options: .regularExpression,
-                                         range: NSRange(location: 0,
-                                                        length: mutableString.length))
+        if shouldSquashNewlines {
+            mutableString.replaceOccurrences(of: "\n\n+",
+                                             with: "\n",
+                                             options: .regularExpression,
+                                             range: NSRange(location: 0,
+                                                            length: mutableString.length))
+        }
         mutableString.replaceOccurrences(of: "&nbsp;",
                                          with: " ",
                                          range: NSRange(location: 0,
