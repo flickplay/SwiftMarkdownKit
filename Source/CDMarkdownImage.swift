@@ -96,21 +96,12 @@ open class CDMarkdownImage: CDMarkdownLinkElement {
                                                       length: linkRange.length + 2))
 
         // load image
-        let textAttachment = NSTextAttachment()
+      
+        let textAttachment: NSTextAttachment
         if let url = URL(string: linkURLString) {
-            let data = try? Data(contentsOf: url)
-            // Try to load image from url
-            if let data = data,
-                let image = CDImage(data: data) {
-                textAttachment.image = image
-                adjustTextAttachmentSize(textAttachment,
-                                         forImage: image)
-            // Try to load image from local file store
-            } else if let image = CDImage(named: url.path) {
-                textAttachment.image = image
-                adjustTextAttachmentSize(textAttachment,
-                                         forImage: image)
-            }
+            textAttachment = RemoteImageTextAttachment(imageURL: url, displaySize: self.size)
+        } else {
+            textAttachment = NSTextAttachment()
         }
 
         // replace text with image
