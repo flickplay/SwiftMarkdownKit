@@ -51,10 +51,37 @@ public class RemoteImageTextAttachment: NSTextAttachment {
     fatalError()
   }
   
+  private func size(forImage image: CDImage?) -> CGSize? {
+    guard
+      let image = image,
+      let size = displaySize
+    else {
+      return nil
+    }
+    
+    
+    let widthScalingFactor = image.size.width / size.width
+    let imageScaledHeight = image.size.height / widthScalingFactor
+    let heightScalingFactor = image.size.height / size.height
+    let imageScaledWidth = image.size.width / heightScalingFactor
+    
+    let newSize: CGSize
+    if imageScaledHeight > size.height {
+      /* use width then */
+      newSize = CGSize(width: image.size.width / heightScalingFactor,
+                       height: image.size.height / heightScalingFactor)
+    } else {
+      newSize = CGSize(width: image.size.width / widthScalingFactor,
+                       height: image.size.height / widthScalingFactor)
+    }
+    
+    return newSize
+  }
+  
   override public func attachmentBounds(for textContainer: NSTextContainer?, proposedLineFragment lineFrag: CGRect, glyphPosition position: CGPoint, characterIndex charIndex: Int) -> CGRect {
     
-    if let displaySize = displaySize {
-      return CGRect(origin: .zero, size: displaySize)
+    if let renderSize = size(forImage: image) {
+      return CGRect(origin: .zero, size: renderSize)
     }
     
     if let originalImageSize = image?.size {
