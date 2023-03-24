@@ -31,6 +31,8 @@ public class RemoteImageTextAttachment: NSTextAttachment {
   // The label that this attachment is being added to
   public weak var label: UILabel?
   
+  public weak var textView: UITextView?
+  
   // The size to display the image. If nil, the image's size will be used
   public var displaySize: CGSize?
   
@@ -40,10 +42,18 @@ public class RemoteImageTextAttachment: NSTextAttachment {
   private weak var textContainer: NSTextContainer?
   private var isDownloading = false
   
-  public init(imageURL: URL, displaySize: CGSize? = nil, downloadQueue: DispatchQueue? = nil) {
+  public init(
+    imageURL: URL,
+    displaySize: CGSize? = nil,
+    downloadQueue: DispatchQueue? = nil,
+    label: UILabel? = nil,
+    textView: UITextView? = nil
+  ) {
     self.imageUrl = imageURL
     self.displaySize = displaySize
     self.downloadQueue = downloadQueue
+    self.label = label
+    self.textView = textView
     super.init(data: nil, ofType: nil)
   }
   
@@ -126,9 +136,10 @@ public class RemoteImageTextAttachment: NSTextAttachment {
         
         strongSelf.image = UIImage(data: data)
         strongSelf.label?.setNeedsDisplay()
+        strongSelf.textView?.setNeedsDisplay()
         
         // For UITextView/NSTextView
-        if let layoutManager = self?.textContainer?.layoutManager,
+        if let layoutManager = textContainer?.layoutManager,
           let ranges = layoutManager.rangesForAttachment(strongSelf) {
           ranges.forEach { range in
             layoutManager.invalidateLayout(forCharacterRange: range, actualCharacterRange: nil)
