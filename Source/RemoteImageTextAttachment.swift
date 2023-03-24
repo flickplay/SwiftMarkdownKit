@@ -31,10 +31,12 @@ public class RemoteImageTextAttachment: NSTextAttachment {
   // The label that this attachment is being added to
   public weak var label: UILabel?
   
-  public weak var textView: UITextView?
-  
   // The size to display the image. If nil, the image's size will be used
-  public var displaySize: CGSize?
+  public var displaySize: CGSize? {
+    didSet {
+      invalidateLayout()
+    }
+  }
   
   public var downloadQueue: DispatchQueue?
   public let imageUrl: URL
@@ -45,15 +47,11 @@ public class RemoteImageTextAttachment: NSTextAttachment {
   public init(
     imageURL: URL,
     displaySize: CGSize? = nil,
-    downloadQueue: DispatchQueue? = nil,
-    label: UILabel? = nil,
-    textView: UITextView? = nil
+    downloadQueue: DispatchQueue? = nil
   ) {
     self.imageUrl = imageURL
     self.displaySize = displaySize
     self.downloadQueue = downloadQueue
-    self.label = label
-    self.textView = textView
     super.init(data: nil, ofType: nil)
   }
   
@@ -121,7 +119,7 @@ public class RemoteImageTextAttachment: NSTextAttachment {
     let downloadQueue = self.downloadQueue ?? DispatchQueue.global()
     downloadQueue.async { [weak self] in
       let data = try? Data(contentsOf: imageUrl)
-      DispatchQueue.main.async { [weak textContainer] in
+      DispatchQueue.main.async { [weak self] in
         guard let strongSelf = self else {
           return
         }
@@ -136,19 +134,25 @@ public class RemoteImageTextAttachment: NSTextAttachment {
         
         strongSelf.image = UIImage(data: data)
         strongSelf.label?.setNeedsDisplay()
-        strongSelf.textView?.setNeedsDisplay()
         
         // For UITextView/NSTextView
-        if let layoutManager = textContainer?.layoutManager,
-          let ranges = layoutManager.rangesForAttachment(strongSelf) {
-          ranges.forEach { range in
-            layoutManager.invalidateLayout(forCharacterRange: range, actualCharacterRange: nil)
-          }
-        }
+        strongSelf.invalidateLayout()
       }
     }
     
     return nil
+  }
+    
+  private func invalidateLayout() {
+    guard
+      let layoutManager = textContainer?.layoutManager,
+      let ranges = layoutManager.rangesForAttachment(self)
+    else {
+      return
+    }
+    ranges.forEach { range in
+      layoutManager.invalidateLayout(forCharacterRange: range, actualCharacterRange: nil)
+    }
   }
 }
 
